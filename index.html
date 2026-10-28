@@ -454,11 +454,12 @@ for(let ix=0;ix<trafficXs.length;ix++)for(let iz=0;iz<trafficZs.length;iz++){
 for(const n of ROAD_NODES){for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){const q=ROAD_BY_KEY.get((n.ix+dx)+':'+(n.iz+dz));if(q)n.links.push({id:q.id,cost:Math.hypot(q.x-n.x,q.z-n.z)});}}
 function nearestRoadNode(x,z){let best=ROAD_NODES[0],bd=Infinity;for(const n of ROAD_NODES){const d=(n.x-x)**2+(n.z-z)**2;if(d<bd){bd=d;best=n}}return best}
 function shortestRoadPath(fromId,toId){
+ if(!ROAD_NODES[fromId]||!ROAD_NODES[toId])return [ROAD_NODES[fromId]||ROAD_NODES[0]];
  const dist=new Map([[fromId,0]]),prev=new Map(),open=new Set(ROAD_NODES.map(n=>n.id));
  while(open.size){let u=-1,bd=Infinity;for(const id of open){const d=dist.has(id)?dist.get(id):Infinity;if(d<bd){bd=d;u=id}}if(u<0||!Number.isFinite(bd))break;open.delete(u);if(u===toId)break;
   for(const e of ROAD_NODES[u].links){if(!open.has(e.id))continue;const ek=roadEdgeKey(u,e.id),blockedUntil=ROAD_BLOCKS.get(ek)||0;if(blockedUntil>tt)continue;const queueLoad=ROAD_CONGESTION.get(ek)||0;const nd=bd+e.cost*(1+Math.min(1.8,queueLoad*.16));if(nd<(dist.get(e.id)??Infinity)){dist.set(e.id,nd);prev.set(e.id,u)}}
  }
- if(fromId!==toId&&!prev.has(toId)){/* If closures isolate the destination, retry with closures temporarily ignored rather than strand traffic. */const blocked=[...ROAD_BLOCKS.entries()];ROAD_BLOCKS.clear();const fallback=shortestRoadPath(fromId,toId);for(const [k,v] of blocked)ROAD_BLOCKS.set(k,v);return fallback;}const ids=[toId];while(ids[0]!==fromId){const q=prev.get(ids[0]);if(q===undefined)return [ROAD_NODES[fromId]];ids.unshift(q)}return ids.map(id=>ROAD_NODES[id]);
+ if(fromId!==toId&&!prev.has(toId)){/* If closures isolate the destination, retry with closures temporarily ignored rather than strand traffic. */if(!ROAD_BLOCKS.size)return [ROAD_NODES[fromId]];const blocked=[...ROAD_BLOCKS.entries()];ROAD_BLOCKS.clear();let fallback;try{fallback=shortestRoadPath(fromId,toId)}finally{for(const [k,v] of blocked)ROAD_BLOCKS.set(k,v)}return fallback;}const ids=[toId];while(ids[0]!==fromId){const q=prev.get(ids[0]);if(q===undefined)return [ROAD_NODES[fromId]];ids.unshift(q)}return ids.map(id=>ROAD_NODES[id]);
 }
 function roadRoute(sx,sz,tx,tz){const a=nearestRoadNode(sx,sz),b=nearestRoadNode(tx,tz),path=shortestRoadPath(a.id,b.id).map(n=>({x:n.x,z:n.z,nodeId:n.id}));path.push({x:tx,z:tz,nodeId:null});return path}
 function routeTurnIntent(t,node){const path=shortestRoadPath(node.id,t.routeGoal),next=path[1];if(!next)return null;if(t.axis==='z'&&next.ix!==node.ix)return (Math.sign(next.x-node.x)*t.dir)>0?'right':'left';if(t.axis==='x'&&next.iz!==node.iz)return (Math.sign(next.z-node.z)*t.dir)<0?'right':'left';return 'straight';}
