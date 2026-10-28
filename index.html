@@ -68,6 +68,37 @@ canvas{display:block;width:100%;height:100%}
 #home kbd{font:700 10px var(--font);padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.14)}
 #help{z-index:50!important}
 @media (max-width:640px){#home .feats{grid-template-columns:repeat(2,1fr)}#home .cta button{flex:1 1 100%}}
+
+/* ---- Mobile / touch layout: keep the view clear, tuck secondary panels into an Info sheet ---- */
+#hbInfo{display:none}
+#info{display:none}
+@media (pointer:coarse){
+ #h{width:auto;max-width:46vw;padding:7px 10px}
+ #h .t{margin-bottom:6px}
+ #h .g{grid-template-columns:repeat(3,auto);gap:4px 14px}
+ #h .g b{font-size:11.5px}
+ #h .hp{margin:7px 0 3px}
+ #h .mh{margin-top:6px;padding:5px 8px;font-size:10.5px;max-height:3.2em;overflow:hidden}
+ #h .st{display:none}
+ #hb{left:calc(50% - 34px)}
+ #hbInfo{display:block;position:fixed;left:calc(50% + 48px);transform:none;top:calc(env(safe-area-inset-top,0px) + 12px);z-index:6;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:var(--fg);font:600 11px var(--font);letter-spacing:.06em;cursor:pointer}
+ #info.open{display:flex;flex-direction:column;gap:8px;position:fixed;z-index:30;left:50%;top:calc(env(safe-area-inset-top,0px) + 54px);transform:translateX(-50%);width:min(440px,92vw);max-height:calc(100% - 80px);overflow:auto;padding:10px;box-sizing:border-box;background:rgba(6,11,19,.92);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+ #info>div{position:static!important;width:auto!important;max-width:none!important;min-width:0!important;pointer-events:auto!important;font-size:12px!important;display:block}
+ #info select{max-width:100%}
+}
+@media (max-height:560px){
+ #home{align-items:flex-start;padding-top:calc(env(safe-area-inset-top,0px) + 14px)}
+ #home .eyebrow{margin-bottom:6px}
+ #home h1{font-size:34px}
+ #home .sub{margin-top:8px;font-size:13px}
+ #home .cta{margin:14px 0 6px}
+ #home .cta button{padding:10px 22px;flex:0 1 auto}
+ #home .feats{grid-template-columns:repeat(4,1fr);margin-top:14px;gap:8px}
+ #home .f{padding:9px}
+ #home .f i{font-size:15px;margin-bottom:4px}
+ #home .f span{font-size:10.5px}
+ #home .foot{margin-top:12px}
+}
 </style>
 </head>
 <body>
@@ -1499,6 +1530,14 @@ addEventListener('beforeunload',()=>{if(window.__noSave||!window.__homeStarted)r
  document.getElementById('hmHelp').addEventListener('click',()=>document.getElementById('hb').click());
  addEventListener('keydown',e=>{if(!started&&e.code==='Enter'&&document.getElementById('help').style.display!=='flex'){e.preventDefault();start()}});
 })();
+
+/* ---- Touch: move secondary panels into the Info sheet ---- */
+try{if(matchMedia('(pointer:coarse)').matches){
+ const info=document.createElement('div');info.id='info';document.body.appendChild(info);
+ [hc10ServiceStatus,gpsPanel,airportStatus].forEach(e=>{if(e)info.appendChild(e)});
+ const b=document.createElement('button');b.id='hbInfo';b.type='button';b.textContent='Info';document.body.appendChild(b);
+ b.addEventListener('click',()=>{const o=info.classList.toggle('open');b.textContent=o?'Close':'Info'});
+}}catch(e){console.warn('Info sheet setup failed',e)}
 requestAnimationFrame(loop);
 </script>
 </body>
